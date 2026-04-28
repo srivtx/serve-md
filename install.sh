@@ -102,8 +102,6 @@ download_release() {
     local tmpdir
     tmpdir=$(mktemp -d)
     
-    say "Downloading ${NAME} ${tag} for ${arch}-${os}..."
-    
     if ! curl -sSfL "$url" -o "${tmpdir}/${asset}"; then
         say_err "Failed to download release asset."
         say "URL: ${url}"
@@ -213,6 +211,7 @@ main() {
     say "Latest release: ${tag}"
     
     # Download
+    say "Downloading ${NAME} ${tag} for ${arch}-${os}..."
     local archive
     archive=$(download_release "$tag" "$os" "$arch")
     
