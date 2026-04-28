@@ -144,16 +144,22 @@ pub fn directory_listing(path: &str, entries: &[DirEntry]) -> String {
     <style>{CSS}</style>
 </head>
 <body>
+    <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Search docs..." autocomplete="off">
+        <div id="search-results"></div>
+    </div>
     <div class="container">
         <main class="content">
             <h1>{title}</h1>
             <ul class="dir-list">{items}</ul>
         </main>
     </div>
+    <script>{JS}</script>
 </body>
 </html>"##,
         title = title,
         CSS = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/static/style.css")),
+        JS = SEARCH_JS,
         items = items
     )
 }
