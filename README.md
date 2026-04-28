@@ -48,6 +48,18 @@ brew install serve-md
 
 Download from [GitHub Releases](https://github.com/srivtx/serve-md/releases).
 
+## Uninstall
+
+```bash
+curl -sSfL https://raw.githubusercontent.com/srivtx/serve-md/main/uninstall.sh | sh
+```
+
+Or if installed via cargo:
+
+```bash
+cargo uninstall serve-md
+```
+
 ## Usage
 
 ```bash
