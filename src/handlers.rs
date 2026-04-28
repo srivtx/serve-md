@@ -1,16 +1,30 @@
 use axum::{
     extract::{Path, State},
     http::{header, StatusCode},
-    response::{Html, IntoResponse, Redirect},
+    response::{Html, IntoResponse, Json, Redirect},
 };
+use serde::Serialize;
 use std::sync::Arc;
 
 use crate::{
     markdown::render_markdown,
-    resolve::{resolve, ResolveResult},
+    resolve::{resolve, search, ResolveResult},
     server::AppState,
     template::{directory_listing, wrap_html},
 };
+
+#[derive(Serialize)]
+struct SearchResponse {
+    query: String,
+    results: Vec<SearchResult>,
+}
+
+#[derive(Serialize)]
+struct SearchResult {
+    url: String,
+    title: String,
+    preview: String,
+}
 
 pub async fn handle_root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     handle_path(State(state), "/".to_string()).await
@@ -80,4 +94,22 @@ async fn handle_path(State(state): State<Arc<AppState>>, url_path: String) -> im
         }
         ResolveResult::NotFound => StatusCode::NOT_FOUND.into_response(),
     }
+}
+
+pub async fn handle_search(
+    State(state): State<Arc<AppState>>,
+    axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
+) -> impl IntoResponse {
+    let query = params.get("q").cloned().unwrap_or_default();
+    let docs = search(&state.index, &query);
+    let results: Vec<SearchResult> = docs
+        .into_iter()
+        .map(|doc| SearchResult {
+            url: doc.url,
+            title: doc.title,
+            preview: doc.preview,
+        })
+        .collect();
+
+    Json(SearchResponse { query, results })
 }

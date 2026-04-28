@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tower_http::timeout::TimeoutLayer;
 
-use crate::handlers::{handle_request, handle_root};
+use crate::handlers::{handle_request, handle_root, handle_search};
 use crate::scan::FileIndex;
 
 pub struct AppState {
@@ -15,6 +15,7 @@ pub fn create_app(index: FileIndex) -> Router {
 
     Router::new()
         .route("/", get(handle_root))
+        .route("/api/search", get(handle_search))
         .route("/*path", get(handle_request))
         .with_state(state)
         .layer(TimeoutLayer::new(Duration::from_secs(30)))

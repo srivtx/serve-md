@@ -1,5 +1,6 @@
 use crate::scan::FileIndex;
 use percent_encoding::{percent_decode_str, utf8_percent_encode, AsciiSet, CONTROLS};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 #[derive(Debug)]
@@ -93,4 +94,33 @@ pub fn resolve(index: &FileIndex, incoming: &str) -> ResolveResult {
     }
 
     ResolveResult::NotFound
+}
+
+pub fn search(index: &FileIndex, query: &str) -> Vec<crate::scan::SearchDoc> {
+    let query = query.to_lowercase();
+    let terms: Vec<_> = query.split_whitespace().collect();
+
+    if terms.is_empty() {
+        return Vec::new();
+    }
+
+    let mut results: HashMap<String, (usize, crate::scan::SearchDoc)> = HashMap::new();
+
+    for term in terms {
+        if let Some(docs) = index.search_index.index.get(term) {
+            for doc in docs {
+                let entry = results.entry(doc.url.clone()).or_insert((0, doc.clone()));
+                entry.0 += 1;
+            }
+        }
+    }
+
+    let mut sorted: Vec<_> = results.into_iter().collect();
+    sorted.sort_by_key(|b| std::cmp::Reverse(b.1 .0));
+
+    sorted
+        .into_iter()
+        .map(|(_, (_, doc))| doc)
+        .take(20)
+        .collect()
 }

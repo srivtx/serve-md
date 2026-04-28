@@ -5,12 +5,25 @@ use std::path::{Path, PathBuf};
 pub struct FileIndex {
     pub files: HashMap<String, PathBuf>,
     pub dirs: HashMap<String, Vec<DirEntry>>,
+    pub search_index: SearchIndex,
 }
 
 pub struct DirEntry {
     pub name: String,
     pub url: String,
     pub is_dir: bool,
+}
+
+pub struct SearchIndex {
+    /// word -> list of (url, title, score)
+    pub index: HashMap<String, Vec<SearchDoc>>,
+}
+
+#[derive(Clone)]
+pub struct SearchDoc {
+    pub url: String,
+    pub title: String,
+    pub preview: String,
 }
 
 pub fn scan_directory(root: &Path) -> anyhow::Result<FileIndex> {
@@ -74,7 +87,35 @@ pub fn scan_directory(root: &Path) -> anyhow::Result<FileIndex> {
         }
     }
 
-    Ok(FileIndex { files, dirs })
+    let mut search_index = SearchIndex {
+        index: HashMap::new(),
+    };
+
+    for (url, path) in &files {
+        if path.extension() == Some(std::ffi::OsStr::new("md")) {
+            if let Ok(content) = std::fs::read_to_string(path) {
+                let title = extract_title(&content);
+                let preview = content.lines().next().unwrap_or("").to_string();
+                let words = tokenize(&content);
+                for word in words {
+                    let docs = search_index.index.entry(word).or_default();
+                    if !docs.iter().any(|d| d.url == *url) {
+                        docs.push(SearchDoc {
+                            url: url.clone(),
+                            title: title.clone(),
+                            preview: preview.clone(),
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(FileIndex {
+        files,
+        dirs,
+        search_index,
+    })
 }
 
 fn path_to_url(relative: &Path) -> String {
@@ -115,4 +156,21 @@ fn is_hidden(path: &Path) -> bool {
         .and_then(|name| name.to_str())
         .map(|name| name.starts_with('.'))
         .unwrap_or(false)
+}
+
+fn extract_title(content: &str) -> String {
+    content
+        .lines()
+        .find(|line| line.starts_with("# "))
+        .map(|line| line.trim_start_matches("# ").trim().to_string())
+        .unwrap_or_else(|| "Untitled".to_string())
+}
+
+fn tokenize(text: &str) -> Vec<String> {
+    text.to_lowercase()
+        .replace(|c: char| !c.is_alphanumeric() && c != ' ', " ")
+        .split_whitespace()
+        .filter(|word| word.len() > 2)
+        .map(String::from)
+        .collect()
 }

@@ -2,6 +2,52 @@ use crate::markdown::{RenderedMarkdown, TocEntry};
 use crate::resolve::encode_url_path;
 use crate::scan::DirEntry;
 
+const SEARCH_JS: &str = r#"
+(function() {
+    const input = document.getElementById('search-input');
+    const results = document.getElementById('search-results');
+    if (!input || !results) return;
+
+    let debounce;
+    input.addEventListener('input', function() {
+        clearTimeout(debounce);
+        const q = input.value.trim();
+        if (q.length < 2) {
+            results.innerHTML = '';
+            results.style.display = 'none';
+            return;
+        }
+        debounce = setTimeout(function() {
+            fetch('/api/search?q=' + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.results.length === 0) {
+                        results.innerHTML = '<div class="search-no-results">No results</div>';
+                    } else {
+                        results.innerHTML = data.results.map(r =>
+                            '<a href="' + r.url + '" class="search-result">' +
+                            '<div class="search-result-title">' + (r.title || r.url) + '</div>' +
+                            '<div class="search-result-preview">' + r.preview + '</div>' +
+                            '</a>'
+                        ).join('');
+                    }
+                    results.style.display = 'block';
+                })
+                .catch(() => {
+                    results.innerHTML = '';
+                    results.style.display = 'none';
+                });
+        }, 150);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !results.contains(e.target)) {
+            results.style.display = 'none';
+        }
+    });
+})();
+"#;
+
 pub fn wrap_html(rendered: &RenderedMarkdown, _path: &str) -> String {
     let title = rendered.title.as_deref().unwrap_or("serve-md");
     let toc_html = build_toc_html(&rendered.toc);
@@ -16,6 +62,10 @@ pub fn wrap_html(rendered: &RenderedMarkdown, _path: &str) -> String {
     <style>{CSS}</style>
 </head>
 <body>
+    <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Search docs..." autocomplete="off">
+        <div id="search-results"></div>
+    </div>
     <div class="container">
         <nav class="toc">
             <div class="toc-header">Contents</div>
@@ -25,10 +75,12 @@ pub fn wrap_html(rendered: &RenderedMarkdown, _path: &str) -> String {
             {content}
         </main>
     </div>
+    <script>{JS}</script>
 </body>
 </html>"##,
         title = title,
         CSS = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/static/style.css")),
+        JS = SEARCH_JS,
         toc_html = toc_html,
         content = rendered.html
     )
