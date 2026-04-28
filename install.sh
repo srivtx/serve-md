@@ -75,8 +75,6 @@ detect_arch() {
 
 # Get the latest release tag from GitHub API
 get_latest_tag() {
-    say "Checking for latest release..."
-    
     # Use curl to fetch the latest release from GitHub API
     tag=$(curl -sSfL \
         -H "Accept: application/vnd.github.v3+json" \
@@ -209,6 +207,7 @@ main() {
     say "Detected platform: ${arch}-${os}"
     
     # Get latest release
+    say "Checking for latest release..."
     local tag
     tag=$(get_latest_tag)
     say "Latest release: ${tag}"
