@@ -23,9 +23,7 @@ const PATH_SEGMENT_ENCODE_SET: &AsciiSet = &CONTROLS
     .add(b'}');
 
 pub fn decode_url(url: &str) -> String {
-    percent_decode_str(url)
-        .decode_utf8_lossy()
-        .to_string()
+    percent_decode_str(url).decode_utf8_lossy().to_string()
 }
 
 pub fn encode_url_path(path: &str) -> String {
@@ -51,7 +49,9 @@ pub fn resolve(index: &FileIndex, incoming: &str) -> ResolveResult {
 
     if let Some(stem) = url_path.strip_suffix(".md") {
         let canonical = if stem.is_empty() { "/" } else { stem };
-        if index.files.contains_key(canonical) || index.dirs.contains_key(&format!("{}/", canonical)) {
+        if index.files.contains_key(canonical)
+            || index.dirs.contains_key(&format!("{}/", canonical))
+        {
             return ResolveResult::Redirect(canonical.to_string());
         }
     }

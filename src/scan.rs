@@ -45,16 +45,14 @@ pub fn scan_directory(root: &Path) -> anyhow::Result<FileIndex> {
 
         if path.is_dir() {
             let dir_url = format!("{}/", url_path);
-            dirs.entry(dir_url.clone()).or_insert_with(Vec::new);
+            dirs.entry(dir_url.clone()).or_default();
 
             let parent_url = parent_dir_url(&url_path);
-            dirs.entry(parent_url.clone())
-                .or_insert_with(Vec::new)
-                .push(DirEntry {
-                    name: file_name_from_url(&url_path),
-                    url: dir_url,
-                    is_dir: true,
-                });
+            dirs.entry(parent_url.clone()).or_default().push(DirEntry {
+                name: file_name_from_url(&url_path),
+                url: dir_url,
+                is_dir: true,
+            });
         } else if path.is_file() {
             let url = if path.extension() == Some(std::ffi::OsStr::new("md")) {
                 url_path
@@ -68,13 +66,11 @@ pub fn scan_directory(root: &Path) -> anyhow::Result<FileIndex> {
             files.insert(url.clone(), path.to_path_buf());
 
             let parent_url = parent_dir_url(&url_path);
-            dirs.entry(parent_url)
-                .or_insert_with(Vec::new)
-                .push(DirEntry {
-                    name: file_name_from_url(&url),
-                    url,
-                    is_dir: false,
-                });
+            dirs.entry(parent_url).or_default().push(DirEntry {
+                name: file_name_from_url(&url),
+                url,
+                is_dir: false,
+            });
         }
     }
 

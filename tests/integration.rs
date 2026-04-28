@@ -1,4 +1,8 @@
-use serve_md::{markdown::render_markdown, resolve::{resolve, ResolveResult}, scan::scan_directory};
+use serve_md::{
+    markdown::render_markdown,
+    resolve::{resolve, ResolveResult},
+    scan::scan_directory,
+};
 use std::collections::HashSet;
 use std::io::Write;
 
@@ -46,7 +50,10 @@ fn test_scan_finds_markdown_and_assets() {
 
     // .secret should be ignored by gitignore
     assert!(!index.files.contains_key("/.secret"));
-    assert!(!index.files.values().any(|p| p.file_name() == Some(std::ffi::OsStr::new(".secret"))));
+    assert!(!index
+        .files
+        .values()
+        .any(|p| p.file_name() == Some(std::ffi::OsStr::new(".secret"))));
 
     assert!(index.dirs.contains_key("/"));
     assert!(index.dirs.contains_key("/guide/"));

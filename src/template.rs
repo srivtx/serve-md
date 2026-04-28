@@ -63,14 +63,16 @@ pub fn directory_listing(path: &str, entries: &[DirEntry]) -> String {
     for entry in &dirs {
         items.push_str(&format!(
             r#"<li><a href="{}" class="dir-entry dir">&#128193; {}/</a></li>"#,
-            encode_url_path(&entry.url), entry.name
+            encode_url_path(&entry.url),
+            entry.name
         ));
     }
 
     for entry in &files {
         items.push_str(&format!(
             r#"<li><a href="{}" class="dir-entry file">&#128196; {}</a></li>"#,
-            encode_url_path(&entry.url), entry.name
+            encode_url_path(&entry.url),
+            entry.name
         ));
     }
 

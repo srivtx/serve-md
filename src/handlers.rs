@@ -23,15 +23,13 @@ pub async fn handle_request(
     handle_path(State(state), format!("/{}", path)).await
 }
 
-async fn handle_path(
-    State(state): State<Arc<AppState>>,
-    url_path: String,
-) -> impl IntoResponse {
+async fn handle_path(State(state): State<Arc<AppState>>, url_path: String) -> impl IntoResponse {
     match resolve(&state.index, &url_path) {
         ResolveResult::Markdown(fs_path) => {
             if let Ok(meta) = tokio::fs::metadata(&fs_path).await {
                 if meta.len() > 10 * 1024 * 1024 {
-                    return (StatusCode::FORBIDDEN, "Markdown file too large (max 10MB)").into_response();
+                    return (StatusCode::FORBIDDEN, "Markdown file too large (max 10MB)")
+                        .into_response();
                 }
             }
             match tokio::fs::read_to_string(&fs_path).await {
@@ -41,7 +39,8 @@ async fn handle_path(
                     Html(html).into_response()
                 }
                 Err(e) => {
-                    let name = fs_path.file_name()
+                    let name = fs_path
+                        .file_name()
                         .map(|n| n.to_string_lossy())
                         .unwrap_or_else(|| "unknown".into());
                     tracing::error!("Failed to read file {}: {}", name, e);
@@ -61,7 +60,8 @@ async fn handle_path(
                     ([(header::CONTENT_TYPE, mime.as_ref())], bytes).into_response()
                 }
                 Err(e) => {
-                    let name = fs_path.file_name()
+                    let name = fs_path
+                        .file_name()
                         .map(|n| n.to_string_lossy())
                         .unwrap_or_else(|| "unknown".into());
                     tracing::error!("Failed to read file {}: {}", name, e);

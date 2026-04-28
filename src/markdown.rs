@@ -54,13 +54,9 @@ pub fn render_markdown(content: &str) -> RenderedMarkdown {
         }
     }
 
-    let parser = Parser::new_ext(content, options).map(|event| {
-        match event {
-            Event::Html(text) => {
-                Event::Text(pulldown_cmark::CowStr::from(escape_html(&text)))
-            }
-            other => other,
-        }
+    let parser = Parser::new_ext(content, options).map(|event| match event {
+        Event::Html(text) => Event::Text(pulldown_cmark::CowStr::from(escape_html(&text))),
+        other => other,
     });
     let mut html_output = String::new();
     html::push_html(&mut html_output, parser);
