@@ -9,7 +9,7 @@
 
 set -e
 
-REPO="serve-md/serve-md"
+REPO="srivtx/serve-md"
 NAME="serve-md"
 
 # Colors for output
