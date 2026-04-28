@@ -76,7 +76,7 @@ detect_arch() {
 # Get the latest release tag from GitHub API
 get_latest_tag() {
     # Use curl to fetch the latest release from GitHub API
-    tag=$(curl -sSfL \
+    tag=$(curl -sSfL --retry 3 --retry-delay 2 \
         -H "Accept: application/vnd.github.v3+json" \
         "https://api.github.com/repos/${REPO}/releases/latest" \
         | grep '"tag_name":' \
@@ -102,7 +102,7 @@ download_release() {
     local tmpdir
     tmpdir=$(mktemp -d)
     
-    if ! curl -sSfL "$url" -o "${tmpdir}/${asset}"; then
+    if ! curl -sSfL --retry 3 --retry-delay 2 "$url" -o "${tmpdir}/${asset}"; then
         say_err "Failed to download release asset."
         say "URL: ${url}"
         say "Your platform may not have a pre-built binary."
